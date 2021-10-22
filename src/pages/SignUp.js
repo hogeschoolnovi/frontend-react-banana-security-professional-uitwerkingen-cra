@@ -11,7 +11,17 @@ function SignUp() {
   // state voor functionaliteit
   const [error, toggleError] = useState(false);
   const [loading, toggleLoading] = useState(false);
+
+  // we maken een canceltoken aan voor ons netwerk-request
+  const source = axios.CancelToken.source();
   const history = useHistory();
+
+  // mocht onze pagina ge-unmount worden voor we klaar zijn met data ophalen, aborten we het request
+  useEffect(() => {
+    return function cleanup() {
+      source.cancel();
+    }
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,10 +33,9 @@ function SignUp() {
         email: email,
         password: password,
         username: username,
+      }, {
+        cancelToken: source.token,
       });
-
-      // Let op: omdat we geen axios Canceltoken gebruiken zul je hier een memory-leak melding krijgen.
-      // Om te zien hoe je een canceltoken implementeerd kun je de bonus-branch bekijken!
 
       // als alles goed gegaan is, linken we dyoor naar de login-pagina
       history.push('/signin');

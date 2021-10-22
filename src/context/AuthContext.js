@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import jwt_decode from 'jwt-decode';
 import axios from 'axios';
+import isTokenValid from '../helpers/isTokenValid';
 
 export const AuthContext = createContext({});
 
@@ -19,7 +20,7 @@ function AuthContextProvider({ children }) {
     const token = localStorage.getItem('token');
 
     // als er WEL een token is, haal dan opnieuw de gebruikersdata op
-    if (token) {
+    if (token && isTokenValid(token)) {
       const decoded = jwt_decode(token);
       fetchUserData(decoded.sub, token);
     } else {

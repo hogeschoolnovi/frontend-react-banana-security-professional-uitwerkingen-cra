@@ -8,6 +8,8 @@ function Profile() {
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
+    const source = axios.CancelToken.source();
+
     // we halen de pagina-content op in de mounting-cycle
     async function fetchProfileData() {
       // haal de token uit de Local Storage om in het GET-request te bewijzen dat we geauthoriseerd zijn
@@ -19,15 +21,20 @@ function Profile() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          cancelToken: source.token,
         });
+
         setProfileData(result.data);
       } catch (e) {
         console.error(e);
       }
     }
-
     fetchProfileData();
-  }, [])
+
+    return function cleanup() {
+      source.cancel();
+    }
+  }, []);
 
   return (
     <>
