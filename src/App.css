@@ -22,6 +22,10 @@ button:hover {
   cursor: pointer;
 }
 
+button:disabled {
+  background-color: #FAD57F;
+}
+
 a,
 a:visited,
 a:active {
@@ -94,6 +98,10 @@ nav a:active {
 
 section  {
   margin: 0 0 50px 0;
+}
+
+.error {
+  color: orangered;
 }
 
 /*Zet mij op een element en ik blijf voor altijd draaien!*/

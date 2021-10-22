@@ -1,34 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import axios from 'axios';
 
 function SignUp() {
+  // state voor het formulier
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  // state voor functionaliteit
+  const [error, toggleError] = useState(false);
+  const [loading, toggleLoading] = useState(false);
   const history = useHistory();
 
-  function handleSubmit(e) {
+  // we maken een canceltoken aan voor ons netwerk-request
+  const source = axios.CancelToken.source();
+
+  // mocht onze pagina ge-unmount worden voor we klaar zijn met data ophalen, aborten we het request
+  useEffect(() => {
+    return function cleanup() {
+      source.cancel();
+    }
+  }, []);
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    toggleError(false);
+    toggleLoading(true);
 
-    async function register() {
-      try {
-        const result = await axios.post('http://localhost:3000/register', {
-          email: email,
-          password: password,
-          username: username,
-        });
+    try {
+      await axios.post('http://localhost:3000/register', {
+        email: email,
+        password: password,
+        username: username,
+      }, {
+        cancelToken: source.token,
+      });
 
-        if (result) {
-          history.push('/signin');
-        }
-      } catch(e) {
-          console.error(e);
-      }
+      // als alles goed gegaan is, linken we door naar de login-pagina
+      history.push('/signin');
+    } catch(e) {
+      console.error(e);
+      toggleError(true);
     }
 
-    register();
+    toggleLoading(false);
   }
 
   return (
@@ -70,14 +86,17 @@ function SignUp() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
+        {error && <p className="error">Dit account bestaat al. Probeer een ander emailadres.</p>}
         <button
           type="submit"
           className="form-button"
+          disabled={loading}
         >
-          Registeren
+          Registreren
         </button>
 
       </form>
+
       <p>Heb je al een account? Je kunt je <Link to="/signin">hier</Link> inloggen.</p>
     </>
   );

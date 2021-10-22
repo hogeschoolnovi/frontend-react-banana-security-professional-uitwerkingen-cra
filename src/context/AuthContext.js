@@ -1,5 +1,7 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import jwt_decode from 'jwt-decode';
+import axios from 'axios';
 
 export const AuthContext = createContext({});
 
@@ -7,41 +9,97 @@ function AuthContextProvider({ children }) {
   const [isAuth, toggleIsAuth] = useState({
     isAuth: false,
     user: null,
+    status: 'pending',
   });
   const history = useHistory();
 
+  // MOUNTING EFFECT
+  useEffect(() => {
+    // haal de JWT op uit Local Storage
+    const token = localStorage.getItem('token');
+
+    // als er WEL een token is, haal dan opnieuw de gebruikersdata op
+    if (token) {
+      const decoded = jwt_decode(token);
+      fetchUserData(decoded.sub, token);
+    } else {
+      // als er GEEN token is doen we niks, en zetten we de status op 'done'
+      toggleIsAuth({
+        isAuth: false,
+        user: null,
+        status: 'done',
+      });
+    }
+  }, []);
+
   function login(JWT) {
-    document.setItem('token', JWT);
+    // zet de token in de Local Storage
+    localStorage.setItem('token', JWT);
+    // decode de token zodat we de ID van de gebruiker hebben en data kunnen ophalen voor de context
+    const decoded = jwt_decode(JWT);
 
-
-
-
-    console.log('Gebruiker is ingelogd!');
-    toggleIsAuth({
-      ...isAuth,
-      isAuth: true,
-    });
+    // geef de ID en token mee aan de fetchUserData functie (staat hieronder)
+    fetchUserData(decoded.sub, JWT);
+    // link de gebruiker door naar de profielpagina
     history.push('/profile');
   }
 
   function logout() {
-    console.log('Gebruiker is uitgelogd!');
+    localStorage.clear();
     toggleIsAuth({
-      ...isAuth,
       isAuth: false,
+      user: null,
+      status: 'done',
     });
+
+    console.log('Gebruiker is uitgelogd!');
     history.push('/');
+  }
+
+  // Omdat we deze functie in login- en het mounting-effect gebruiken, staat hij hier gedeclareerd!
+  async function fetchUserData(id, token) {
+    try {
+      // haal gebruikersdata op met de token en id van de gebruiker
+      const result = await axios.get(`http://localhost:3000/600/users/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // zet de gegevens in de state
+      toggleIsAuth({
+        ...isAuth,
+        isAuth: true,
+        user: {
+          username: result.data.username,
+          email: result.data.email,
+          id: result.data.id,
+        },
+        status: 'done',
+      });
+
+    } catch (e) {
+      console.error(e);
+      // ging er iets mis? Plaatsen we geen data in de state
+      toggleIsAuth({
+        isAuth: false,
+        user: null,
+        status: 'done',
+      });
+    }
   }
 
   const contextData = {
     isAuth: isAuth.isAuth,
+    user: isAuth.user,
     login: login,
     logout: logout,
   };
 
   return (
     <AuthContext.Provider value={contextData}>
-      {children}
+      {isAuth.status === 'done' ? children : <p>Loading...</p>}
     </AuthContext.Provider>
   );
 }
