@@ -38,10 +38,10 @@ function AuthContextProvider({ children }) {
     // decode de token zodat we de ID van de gebruiker hebben en data kunnen ophalen voor de context
     const decoded = jwt_decode(JWT);
 
-    // geef de ID en token mee aan de fetchUserData functie (staat hieronder)
-    fetchUserData(decoded.sub, JWT);
+    // geef de ID, token en redirect-link mee aan de fetchUserData functie (staat hieronder)
+    fetchUserData(decoded.sub, JWT, '/profile');
     // link de gebruiker door naar de profielpagina
-    history.push('/profile');
+    // history.push('/profile');
   }
 
   function logout() {
@@ -57,7 +57,7 @@ function AuthContextProvider({ children }) {
   }
 
   // Omdat we deze functie in login- en het mounting-effect gebruiken, staat hij hier gedeclareerd!
-  async function fetchUserData(id, token) {
+  async function fetchUserData(id, token, redirectUrl) {
     try {
       // haal gebruikersdata op met de token en id van de gebruiker
       const result = await axios.get(`http://localhost:3000/600/users/${id}`, {
@@ -78,6 +78,12 @@ function AuthContextProvider({ children }) {
         },
         status: 'done',
       });
+
+      // als er een redirect URL is meegegeven (bij het mount-effect doen we dit niet) linken we hiernnaartoe door
+      // als we de history.push in de login-functie zouden zetten, linken we al door voor de gebuiker is opgehaald!
+      if (redirectUrl) {
+        history.push(redirectUrl);
+      }
 
     } catch (e) {
       console.error(e);
