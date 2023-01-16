@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function SignUp() {
@@ -11,7 +11,7 @@ function SignUp() {
   // state voor functionaliteit
   const [error, toggleError] = useState(false);
   const [loading, toggleLoading] = useState(false);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,7 +29,7 @@ function SignUp() {
       // Om te zien hoe je een canceltoken implementeerd kun je de bonus-branch bekijken!
 
       // als alles goed gegaan is, linken we dyoor naar de login-pagina
-      history.push('/signin');
+      navigate('/signin');
     } catch(e) {
       console.error(e);
       toggleError(true);
