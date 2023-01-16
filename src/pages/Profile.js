@@ -26,7 +26,7 @@ function Profile() {
       }
     }
 
-    fetchProfileData();
+    void fetchProfileData();
   }, [])
 
   return (
